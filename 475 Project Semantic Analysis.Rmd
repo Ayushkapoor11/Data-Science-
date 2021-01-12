@@ -1,0 +1,67 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+library(DT)
+library(syuzhet)
+library(sentimentr)
+# Read the required the dataset
+news <- read.csv("Combined_News_DJIA.csv")
+
+news20 <- news[3,21]
+news20
+```
+Do the same PER DAY for the ENTIRE dataframe which will tell us the distribution of the sentiments
+```{r}
+
+#Join the rows
+news$tops <- do.call(paste, as.data.frame(news, stringsAsFactors = FALSE))
+#Calculate the number of words per sentiment
+sentiment <- get_nrc_sentiment(as.character(news$tops))
+# Join the table with the sentiments and the date and  calculate the presence of eight different emotions and their corresponding valence in a text file
+sent <- cbind(news$Date, sentiment)
+colnames(sent)<-c("Date","Anger", "Anticipation", "Disgust", "Fear", "Joy", "Sadness", "Surprise", "Trust", "Negative", "Positive")
+```
+
+
+```{r}
+sums<-as.data.frame(colSums(sent[,-1]))
+colnames(sums)<-"Frequency"
+sums$Sentiment<-rownames(sums)
+
+ p<-ggplot(data=sums, aes(x=Sentiment, y=Frequency, fill=sums$Sentiment)) +
+  geom_bar(stat="identity")+coord_flip() + theme(legend.position="none")
+p+theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+
+```
+
+```{r}
+sum<-as.data.frame(sums[-2])
+datatable(sum,options = list(dom = 't'))
+```
+Now to check how if the news PER day's general sentiment is positive or negative? 
+
+```{r}
+#We calculate the weighted average of sentiments per day
+senti <- as.data.frame(sentiment_by(news$tops))
+
+#Join tables 
+news$ID<-seq.int(nrow(news))
+
+
+df<-merge(news, senti, by.x="ID", by.y="element_id")
+
+df$Date2<-as.Date(df$Date)
+
+
+p<- ggplot(df, aes(x=Date2, y=ave_sentiment))+geom_line()+geom_hline(yintercept=0, colour="red", size=1.5)+ labs(x="Time",y="Emotional valence") 
+
+p  
+```
+
+

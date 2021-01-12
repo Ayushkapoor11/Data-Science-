@@ -1,0 +1,41 @@
+---
+title: "Question 3"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document:
+    df_print: paged
+---
+
+
+```{r}
+library(tm)
+library(wordcloud)
+
+text <- readLines(file.choose())
+docs <- Corpus(VectorSource(text))
+docs <- tm_map(docs, tolower)
+docs <- tm_map(docs, removeNumbers)
+docs <- tm_map(docs, removePunctuation)
+docs <- tm_map(docs, removeWords, stopwords("english"))
+docs <- tm_map(docs, stripWhitespace)
+toSpace <- content_transformer(function(x, pattern) gsub(pattern, " ", x))
+docs <- tm_map (docs, toSpace, "/")
+docs <- tm_map (docs, toSpace, "?")
+docs <- tm_map (docs, toSpace, ",")
+docs <- tm_map (docs, toSpace, ".")
+docs <- tm_map (docs, toSpace, "@")
+
+docs <- Corpus(VectorSource(text))
+docs <- tm_map(docs, removeWords, stopwords("english"))
+dtm <- TermDocumentMatrix(docs) 
+m   <-  as.matrix(dtm)
+v <- sort(rowSums(m), decreasing = TRUE)
+final <- data.frame(word = names(v) , freq = v)
+head(final, 10)
+
+wordcloud(words = final$word, freq = final$freq,min.freq = 10,max.words = 200 ,colors = brewer.pal(8, "Dark2") )
+
+```
+ 
+
